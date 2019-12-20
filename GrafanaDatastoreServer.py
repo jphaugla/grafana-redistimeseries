@@ -3,6 +3,7 @@
 import argparse
 import redis
 import flask
+import pytz
 from datetime import timedelta, datetime
 import dateutil.parser
 from gevent.pywsgi import WSGIServer
@@ -12,7 +13,8 @@ from flask_cors import CORS, cross_origin
 app = Flask(__name__)
 CORS(app)
 
-EPOCH = datetime(1970, 1, 1, 0, 0, 0)
+utc = pytz.timezone('UTC')
+EPOCH = utc.localize(datetime(1970, 1, 1, 0, 0, 0))
 
 REDIS_POOL = None
 SCAN_TYPE_SCRIPT = """local cursor, pat, typ, cnt = ARGV[1], ARGV[2], ARGV[3], ARGV[4] or 100
