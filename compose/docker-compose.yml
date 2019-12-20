@@ -2,12 +2,15 @@ version: '3'
 services:
   redis:
     image: "redislabs/redistimeseries:edge"
+    container_name: redis
     ports:
       - "6379:6379"
   grafana_redis_source:
     build: ../.
     environment:
       - "REDIS_HOST=redis"
+    volumes:
+      - ../data/:/data/
     depends_on:
       - redis
   grafana:
