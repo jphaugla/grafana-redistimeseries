@@ -3,6 +3,8 @@
 [![GitHub issues](https://img.shields.io/github/release/RedisTimeSeries/grafana-redistimeseries.svg)](https://github.com/RedisTimeSeries/grafana-redistimeseries/releases/latest)
 [![Codecov](https://codecov.io/gh/RedisTimeSeries/grafana-redistimeseries/branch/master/graph/badge.svg)](https://codecov.io/gh/RedisTimeSeries/grafana-redistimeseries)
 
+# Jason addition
+I have added a data directory and a Python program to load net asset value as well as stock ticker quotes of a few companies to test out redis.  This is included in a separate README file called README_ticker.md
 
 # RedisTimeSeries-Datasource
 Grafana Datasource for RedisTimeSeries
