@@ -7,6 +7,7 @@ services:
       - "6379:6379"
   grafana_redis_source:
     build: ../.
+    container_name: grafana_redis_source
     environment:
       - "REDIS_HOST=redis"
     volumes:
@@ -15,7 +16,17 @@ services:
       - redis
   grafana:
     build: ./grafana/
+    container_name: grafana
     ports:
       - "3000:3000"
     depends_on:
       - grafana_redis_source
+  insight:
+    image: "redislabs/redisinsight:latest"
+    container_name: insight
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./redisinsight:/db
+    depends_on:
+      - redis
