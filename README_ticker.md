@@ -32,6 +32,11 @@ ts.mrange 1576216800000 1576476000000 FILTER Account=ACCT2 RiskGroup=RG1
 ```
 ## Run on grafana
 the source is all set up, so just add query and select one of the time series
+Steps are:
+1.  click on + and create
+2.  click "add query"
+3.  select "tiemserie" and on select metric, pick a company like IBM
+4.  on top right, change time period to 5 years
 
 ##  installing on mac
 1. install xcode
