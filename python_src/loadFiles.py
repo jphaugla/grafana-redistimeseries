@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 def connect():
-    r = redis.Redis("redis-14793.jphcluster.demo.redislabs.com", 14793)
+    r = redis.Redis("redis-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxcom", 11234)
     return r
 
 
