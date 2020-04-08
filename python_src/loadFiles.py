@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 def connect():
-    r = redis.Redis("localhost", 6379)
+    r = redis.Redis("redis-14793.jphcluster.demo.redislabs.com", 14793)
     return r
 
 
@@ -51,22 +51,28 @@ def convert_csv_to_json(datafile, target_datafile):
 
 def load_json_to_db(con, datafile, timeseries):
     # print("entering load_json_to_db with datafile=" + datafile)
-    con.delete(timeseries)
-    data = json.loads(open(datafile, "r").readline())
-    create_command = "TS.CREATE " + timeseries
-    # print(create_command)
-    # con.execute_command(create_command)
-    # print(data)
     i = 0
-    for t in data:
-        just_date = data[i]["<DATE>"]
-        just_time = data[i]["<TIME>"]
-        closing_string = data[i]["<CLOSE>"]
-        closing = float(closing_string)
-        # print("i=" + str(i) + " date=" + just_date + " time=" + just_time + " closing=" + closing_string)
-        ts = date_fields_to_ts(just_date,just_time)
-        con.execute_command("TS.ADD", timeseries, ts, closing)
-        i += 1
+    try:
+        data = json.loads(open(datafile, "r").readline())
+        create_command = "TS.CREATE " + timeseries
+        pipe = con.pipeline()
+        pipe.delete(timeseries)
+        # print(create_command)
+        # con.execute_command(create_command)
+        # print(data)
+        for t in data:
+            just_date = data[i]["<DATE>"]
+            just_time = data[i]["<TIME>"]
+            closing_string = data[i]["<CLOSE>"]
+            closing = float(closing_string)
+            # print("i=" + str(i) + " date=" + just_date + " time=" + just_time + " closing=" + closing_string)
+            ts = date_fields_to_ts(just_date,just_time)
+            pipe.execute_command("TS.ADD", timeseries, ts, closing)
+            i += 1
+        pipe.execute()
+    except Exception as e:
+        print("Ignore exceptions " + str(e) + " in file=" + datafile)
+    return i
 
 
 def load_csv_to_db_with_labels(con, datafile, instrument_id, risk_group, account_id):
