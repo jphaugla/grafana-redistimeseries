@@ -8,7 +8,6 @@ RUN apk add --no-cache --virtual build-deps gcc musl-dev libffi-dev \
     && apk del build-deps
 
 COPY GrafanaDatastoreServer.py /app/
-COPY redisTS.py /app/
 
 EXPOSE 8080
 ENV REDIS_HOST=redis
