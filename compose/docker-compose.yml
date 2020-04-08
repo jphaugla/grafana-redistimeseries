@@ -12,6 +12,7 @@ services:
       - "REDIS_HOST=redis"
     volumes:
       - ../data/:/data/
+      - ../python_src/:/python_src/
     depends_on:
       - redis
   grafana:

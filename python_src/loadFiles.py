@@ -1,11 +1,13 @@
 import json
 import csv
 import redis
+import os
+import errno
 from datetime import datetime
 
 
 def connect():
-    r = redis.Redis("redis", 6379)
+    r = redis.Redis("localhost", 6379)
     return r
 
 
@@ -14,16 +16,58 @@ def datestr_to_ts(datestr):
     ts = int(dt.strftime('%s'))*1000
     return ts
 
+def date_fields_to_ts(full_date, in_time):
+    datestr = full_date + ":" + in_time
+    dt = datetime.strptime(datestr, "%Y%m%d:%H%M%S")
+    ts = int(dt.strftime('%s'))*1000
+    return ts
+
+def convert_csv_to_json(datafile, target_datafile):
+    # read the csv and add the data to a dictionary
+
+    arr = []
+
+    with open(datafile) as csvFile:
+        csvReader = csv.DictReader(csvFile)
+        # print(csvReader)
+        for csvRow in csvReader:
+            arr.append(csvRow)
+
+    # print(arr)
+
+    # write the data to a json file
+    if not os.path.exists(os.path.dirname(target_datafile)):
+        try:
+            os.makedirs(os.path.dirname(target_datafile))
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+    with open(target_datafile, "w") as jsonFile:
+        jsonFile.write(json.dumps(arr, separators=(',', ':')))
+
+    csvFile.close()
+    jsonFile.close()
+
 
 def load_json_to_db(con, datafile, timeseries):
+    # print("entering load_json_to_db with datafile=" + datafile)
+    con.delete(timeseries)
     data = json.loads(open(datafile, "r").readline())
+    create_command = "TS.CREATE " + timeseries
+    # print(create_command)
+    # con.execute_command(create_command)
+    # print(data)
     i = 0
-    for t in data["date"]:
-        ts = datestr_to_ts(t)
-        v = data["values"][i]
-        print("{} - {} : {}".format(timeseries, ts, v))
-        con.execute_command("TS.ADD", timeseries, ts, v)
+    for t in data:
+        just_date = data[i]["<DATE>"]
+        just_time = data[i]["<TIME>"]
+        closing_string = data[i]["<CLOSE>"]
+        closing = float(closing_string)
+        # print("i=" + str(i) + " date=" + just_date + " time=" + just_time + " closing=" + closing_string)
+        ts = date_fields_to_ts(just_date,just_time)
+        con.execute_command("TS.ADD", timeseries, ts, closing)
         i += 1
+
 
 def load_csv_to_db_with_labels(con, datafile, instrument_id, risk_group, account_id):
     #  label_string = "labels={'Account':'" + account_id + "','RiskGroup':'" + risk_group +
@@ -60,34 +104,3 @@ def load_csv_to_db(con, datafile, hash_key, label_string):
                 print(add_command)
                 con.execute_command(add_command)
         csv_file.close()
-
-
-con = connect()
-con.ping()
-load_csv_to_db_with_labels(con, "/data/DJI.csv", "DJI", "RG1", "ACCT1")
-load_csv_to_db_with_labels(con, "/data/BTC-USD.csv", "BTC", "RG1", "ACCT1")
-load_csv_to_db_with_labels(con, "/data/GSPC.csv", "GSPC", "RG1", "ACCT1")
-load_csv_to_db_with_labels(con, "/data/IXIC.csv", "IXIC", "RG2", "ACCT1")
-load_csv_to_db_with_labels(con, "/data/N225.csv", "N225", "RG2", "ACCT1")
-load_csv_to_db_with_labels(con, "/data/TNX.csv", "TNX", "RG2", "ACCT1")
-
-load_csv_to_db_with_labels(con, "/data/DJI.csv", "DJI", "RG1", "ACCT2")
-load_csv_to_db_with_labels(con, "/data/BTC-USD.csv", "BTC", "RG1", "ACCT2")
-load_csv_to_db_with_labels(con, "/data/GSPC.csv", "GSPC", "RG1", "ACCT2")
-load_csv_to_db_with_labels(con, "/data/IXIC.csv", "IXIC", "RG2", "ACCT2")
-load_csv_to_db_with_labels(con, "/data/N225.csv", "N225", "RG2", "ACCT2")
-load_csv_to_db_with_labels(con, "/data/TNX.csv", "TNX", "RG2", "ACCT2")
-
-load_csv_to_db(con, "/data/AAPL.csv", "APPL", "LABELS ticker AAPL")
-load_csv_to_db(con, "/data/GOOG.csv", "GOOG", "LABELS ticker GOOG")
-load_csv_to_db(con, "/data/IBM.csv", "IBM", "LABELS ticker IBM")
-load_csv_to_db(con, "/data/TSLA.csv", "TSLA", "LABELS ticker TSLA")
-
-print("successful completion")
-
-
-
-
-
-
-
