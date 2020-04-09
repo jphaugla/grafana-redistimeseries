@@ -8,9 +8,16 @@ def main(argv):
   con = connect()
   print("Number of arguments:" + str(len(argv)) +  " arguments.")
   print("Argument List:" +  str(argv))
+  # first argument is base directory to start
+  # second argument is a suffix to add to the time series so multiple copies of each stock ticker can be added
+  # third argument is a flag to add using timeseries TS or to run a standard redis string
 
   json_base_directory=argv[0] 
   time_series_suffix=argv[1]
+  if(len(argv)>2):
+     target_datatype=argv[2]
+  else:
+     target_datatype="TS"
   # read the csv and add the data to a dictionary
   filecnt = 0
   reccnt = 0
@@ -25,7 +32,7 @@ def main(argv):
              # print("json=" + json_name)
              # print(csv_dirpath + file)
              timeseries = file.replace(".json", "") + time_series_suffix
-             thiscount = load_json_to_db(con, json_dirpath + file, timeseries)
+             thiscount = load_json_to_db(con, json_dirpath + file, timeseries, target_datatype)
              reccnt += thiscount
     now = datetime.datetime.now()
     print(str(reccnt) + " rows loaded")

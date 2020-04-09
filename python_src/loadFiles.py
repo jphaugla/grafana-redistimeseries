@@ -7,7 +7,8 @@ from datetime import datetime
 
 
 def connect():
-    r = redis.Redis("redis-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxcom", 11234)
+    # hide the connection for git
+    r = redis.Redis("redis-108xxxxxxxxuster.demo.redislabs.com", 10xxx)
     return r
 
 
@@ -49,16 +50,17 @@ def convert_csv_to_json(datafile, target_datafile):
     jsonFile.close()
 
 
-def load_json_to_db(con, datafile, timeseries):
+def load_json_to_db(con, datafile, timeseries, target_datatype="TS"):
     # print("entering load_json_to_db with datafile=" + datafile)
     i = 0
     try:
         data = json.loads(open(datafile, "r").readline())
-        create_command = "TS.CREATE " + timeseries
         pipe = con.pipeline()
-        pipe.delete(timeseries)
+        if(target_datatype == "TS"):
+            create_command = "TS.CREATE " + timeseries
+            pipe.delete(timeseries)
+            pipe.execute_command(create_command)
         # print(create_command)
-        # con.execute_command(create_command)
         # print(data)
         for t in data:
             just_date = data[i]["<DATE>"]
@@ -67,7 +69,10 @@ def load_json_to_db(con, datafile, timeseries):
             closing = float(closing_string)
             # print("i=" + str(i) + " date=" + just_date + " time=" + just_time + " closing=" + closing_string)
             ts = date_fields_to_ts(just_date,just_time)
-            pipe.execute_command("TS.ADD", timeseries, ts, closing)
+            if(target_datatype == "TS"):
+                pipe.execute_command("TS.ADD", timeseries, ts, closing)
+            else:
+                pipe.set("{" + timeseries + "}" + ":" + str(ts), closing)
             i += 1
         pipe.execute()
     except Exception as e:
